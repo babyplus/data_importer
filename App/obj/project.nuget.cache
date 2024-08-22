@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "dgSpecHash": "YqQqXwWMjnqoobbMTYpf0i1n1sF0b1EvHCWxLFvKFmjgD4AryL+JpmPiB4mUcD1KOSBfuxTxYPzDhuD+LYYBtA==",
+  "success": true,
+  "projectFilePath": "/App/App.csproj",
+  "expectedPackageFiles": [
+    "/root/.nuget/packages/commandlineparser/2.9.1/commandlineparser.2.9.1.nupkg.sha512",
+    "/root/.nuget/packages/nuget.commandline/6.11.0/nuget.commandline.6.11.0.nupkg.sha512",
+    "/root/.nuget/packages/yamldotnet/16.0.0/yamldotnet.16.0.0.nupkg.sha512"
+  ],
+  "logs": []
+}
