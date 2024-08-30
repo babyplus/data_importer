@@ -42,6 +42,10 @@
               "target": "Package",
               "version": "[2.9.1, )"
             },
+            "InfluxDB.Client": {
+              "target": "Package",
+              "version": "[4.17.0, )"
+            },
             "NuGet.CommandLine": {
               "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
               "suppressParent": "All",
