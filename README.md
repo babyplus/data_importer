@@ -369,4 +369,14 @@ COPY --from=compiler /tmp/src/data_importer/App /App
 COPY --from=compiler /tmp/src/data_importer/packages /root/.nuget/packages
 WORKDIR /App 
 
-``` 
+```
+
+# 快速开始
+
+1. 准备数据库（略）
+2. 下载镜像压缩包
+3. 上传镜像压缩包到服务器
+4. 解压镜像压缩包
+5. 导入镜像
+6. 运行
+ 

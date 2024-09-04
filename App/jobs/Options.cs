@@ -116,12 +116,6 @@ namespace MyJobs
             List<Markers> markers_list = deserializer.Deserialize<List<Markers>>(json_string);
 
             {
-            //    const string token = "9OyYqdvvpKlIewQr1U4jrNOMufKw5vfM2rpkakQ1Jf34JFjP0gX7Jzc9j4rOQcXS1cDIGPXhtQXpOlDd6o4WIg==";
-            //    const string bucket = "recordings";
-            //    const string org = "HUANG";
-            //    const string api = "http://192.168.56.1:8086"; 
-            //    const string timezone = "Asia/Shanghai"; 
-            //    const string measurement = "wireless";
                 MyModels.InfluxDBConfig config = new MyModels.InfluxDBConfig();
                 config.Token = opts.Token;
                 config.Bucket = opts.Bucket;
