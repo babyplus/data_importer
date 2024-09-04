@@ -1,18 +1,47 @@
 # 准备编译和运行环境
 
 ```
-[root@archlinux tool]# docker pull registry.cn-hangzhou.aliyuncs.com/babyplus/get:a231129dc4b6.sdk.8_0
-a231129dc4b6.sdk.8_0: Pulling from babyplus/get
-Digest: sha256:54290a4faddce14b1a3fcbc3b61176acea84c2ec4c739311ec00741d3f22a08b
-Status: Image is up to date for registry.cn-hangzhou.aliyuncs.com/babyplus/get:a231129dc4b6.sdk.8_0
-registry.cn-hangzhou.aliyuncs.com/babyplus/get:a231129dc4b6.sdk.8_0
-[root@archlinux tool]# 
-[root@archlinux tool]# docker pull registry.cn-hangzhou.aliyuncs.com/babyplus/get:a23113098cc3.runtime.8_0
-a23113098cc3.runtime.8_0: Pulling from babyplus/get
-Digest: sha256:690bcef83b764e37aa07e913a6826957a89d9bf2e1c177505364214824c0ab68
-Status: Image is up to date for registry.cn-hangzhou.aliyuncs.com/babyplus/get:a23113098cc3.runtime.8_0
-registry.cn-hangzhou.aliyuncs.com/babyplus/get:a23113098cc3.runtime.8_0
-[root@archlinux tool]# 
+[root@archlinux ~]# docker pull mcr.microsoft.com/dotnet/sdk:8.0
+8.0: Pulling from dotnet/sdk
+e4fff0779e6d: Already exists 
+88496bad2e81: Pull complete 
+c82d150f73e8: Pull complete 
+1d2f51cd947a: Pull complete 
+dfde04fc2ec3: Pull complete 
+a870a55f5dde: Pull complete 
+1c7123b4e8b3: Pull complete 
+6a80a6870f65: Pull complete 
+a70678546d2f: Pull complete 
+Digest: sha256:8c6beed050a602970c3d275756ed3c19065e42ce6ca0809f5a6fcbf5d36fd305
+Status: Downloaded newer image for mcr.microsoft.com/dotnet/sdk:8.0
+mcr.microsoft.com/dotnet/sdk:8.0
+[root@archlinux ~]# docker pull mcr.microsoft.com/dotnet/runtime:8.0
+8.0: Pulling from dotnet/runtime
+e4fff0779e6d: Already exists 
+88496bad2e81: Already exists 
+c82d150f73e8: Already exists 
+1d2f51cd947a: Already exists 
+dfde04fc2ec3: Already exists 
+Digest: sha256:39b7ffd4f2fe8522aeef9fa57705ffc6a8123a857458e25403e2c8e39dd40167
+Status: Downloaded newer image for mcr.microsoft.com/dotnet/runtime:8.0
+mcr.microsoft.com/dotnet/runtime:8.0
+```
+
+# 准备数据库
+
+## influxdb:2.7.9
+
+```
+[root@archlinux data_importer]# cat ../influxdb/start_influxdb.sh 
+docker run -d -p 8086:8086 \
+  -v "$PWD/data:/var/lib/influxdb2" \
+  -v "$PWD/config:/etc/influxdb2" \
+  -e DOCKER_INFLUXDB_INIT_MODE=setup \
+  -e DOCKER_INFLUXDB_INIT_USERNAME=root \
+  -e DOCKER_INFLUXDB_INIT_PASSWORD=rXX8Gra8 \
+  -e DOCKER_INFLUXDB_INIT_ORG=HUANG \
+  -e DOCKER_INFLUXDB_INIT_BUCKET=recordings \
+  influxdb:2.7.9
 ```
 
 # 项目
@@ -21,7 +50,7 @@ registry.cn-hangzhou.aliyuncs.com/babyplus/get:a23113098cc3.runtime.8_0
 
 ```
 root@d7738967c706:/App# dotnet --version
-8.0.100
+8.0.401
 
 ```
 
@@ -279,7 +308,7 @@ root@ace21eabdcdb:/App# cat App.csproj
 ## 开发环境脚本
 
 ```
-[root@archlinux tool]# cat develop.sh 
+[root@archlinux data_importer]# cat develop.sh 
 docker run -it -v `pwd`/App:/App -v `pwd`/packages:/root/.nuget/packages -w /App --rm mcr.microsoft.com/dotnet/sdk:8.0 bash
 
 ```
@@ -287,7 +316,7 @@ docker run -it -v `pwd`/App:/App -v `pwd`/packages:/root/.nuget/packages -w /App
 ## 编译脚本
 
 ```
-[root@archlinux tool]# cat compile.sh 
+[root@archlinux data_importer]# cat compile.sh 
 docker run -it -v `pwd`/App:/App -v `pwd`/packages:/root/.nuget/packages -w /App --rm mcr.microsoft.com/dotnet/sdk:8.0 dotnet build
 
 ```
@@ -295,7 +324,7 @@ docker run -it -v `pwd`/App:/App -v `pwd`/packages:/root/.nuget/packages -w /App
 ## 运行脚本
 
 ```
-[root@archlinux tool]# cat run.sh 
+[root@archlinux data_importer]# cat run.sh 
 # Verify the JSON file.
 docker run -it -v `pwd`/App:/App -v `pwd`/packages:/root/.nuget/packages -w /App --rm mcr.microsoft.com/dotnet/runtime:8.0 ./bin/Debug/net8.0/App json_verify -i /App/test/data.json
 # Parse the JSON file and store the data in the influxDB.
@@ -324,9 +353,20 @@ Table: keys: [_start, _stop, _field, _measurement, id, province]
 ## 镜像打包脚本
 
 ```
-[root@archlinux tool]# cat Dockerfile 
+[root@archlinux data_importer]# cat Dockerfile 
+FROM registry.cn-hangzhou.aliyuncs.com/babyplus/get:a2211240e2f7.git.2_37_1 as SourceDownloader
+RUN mkdir -p /tmp/src
+WORKDIR /tmp/src
+RUN git clone https://github.com/babyplus/data_importer.git
+
+FROM mcr.microsoft.com/dotnet/sdk:8.0 as compiler
+COPY --from=SourceDownloader /tmp/src/data_importer /tmp/src/data_importer
+WORKDIR /tmp/src/data_importer/App
+RUN dotnet build
+
 FROM mcr.microsoft.com/dotnet/runtime:8.0
-COPY App /App 
-COPY packages /root/.nuget/packages
+COPY --from=compiler /tmp/src/data_importer/App /App
+COPY --from=compiler /tmp/src/data_importer/packages /root/.nuget/packages
 WORKDIR /App 
+
 ``` 
